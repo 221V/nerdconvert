@@ -60,10 +60,14 @@ def get_glyphs(font):
 def generate_svgs(glyphs, svgdirectory):
     result = True
     index = 1
+    invalid_chars = [' ', '/', '\\', ':', '*', '?', '"', '<', '>', '|']
 
     for glyph in glyphs:
+        glyph_name = glyph.glyphname
+        for char in invalid_chars:
+          glyph_name = glyph_name.replace(char, '_')
         index_str = str(index)
-        svgfile = svgdirectory + index_str + '_' + glyph.glyphname + '.svg'
+        svgfile = svgdirectory + index_str + '_' + glyph_name + '.svg'
         print('svgfile: ', svgfile)
         glyph.export(svgfile)
         #result[index_str] = { 'svgfile': svgfile }
@@ -174,12 +178,12 @@ def filter_records(data, filters):
 
 def create_raw_data(resources, force_download=False, svgdir='svg'):
     print('fontfile path: ', resources['fontfile']['filepath'])
-    print('cssfile path: ', resources['cssfile']['filepath'])
+#    print('cssfile path: ', resources['cssfile']['filepath'])
     
     font = fontforge.open(resources['fontfile']['filepath'])
-    table = extract_from_css(resources['cssfile']['filepath'])
-    print('Extracted iconinfo from cssfile:',
-            resources['cssfile']['filepath'])
+#    table = extract_from_css(resources['cssfile']['filepath'])
+#    print('Extracted iconinfo from cssfile:',
+#            resources['cssfile']['filepath'])
 
     glyph_data = extract_from_glyphs(get_glyphs(font))
     print('Extracted iconinfo from fontfile:',
@@ -190,13 +194,11 @@ def create_raw_data(resources, force_download=False, svgdir='svg'):
     svg_files = generate_svgs(get_glyphs(font), svgdir)
     print('Generated svgicons from fontfile:',
             resources['fontfile']['filepath'], '=>', svgdir+'*.svg')
-
     return True
 
 def split_path(path, extension=None, default_filename=None):
     if extension and default_filename and not path.endswith(extension):
         path = os.path.join(path, default_filename+extension)
-
     dirname, filename = os.path.split(path)
     while r'{' in dirname:
         dirname, fn = os.path.split(dirname)
@@ -207,9 +209,7 @@ def split_path(path, extension=None, default_filename=None):
 def export_svg(filepath, data, record_formatter):
     import shutil
     base_dir, file_name = split_path(filepath, '.svg', '{code}_{name}')
-    
     filename_formatter = FilenameFormatter(os.path.join(base_dir, file_name))
-
     for record in data:
         filename = filename_formatter.format(record)
         os.makedirs(os.path.dirname(filename), exist_ok=True)
@@ -227,7 +227,8 @@ def parse_args():
         formatter_class=argparse.RawTextHelpFormatter)
 
     #parser.add_argument('--download', default='/tmp/nerdfonts_dl/', type=str,
-    parser.add_argument('--download', default='/home/e/Завантаження/Firefox_Downloads/nerd-fonts-3.3.0/', type=str,
+    #parser.add_argument('--download', default='/home/e/Завантаження/Firefox_Downloads/nerd-fonts-3.3.0/', type=str,
+    parser.add_argument('--download', default='/home/e/Завантаження/Firefox_Downloads/nerd-fonts_svg_all/glyphs/', type=str,
         help='Download Directory for nerd-fonts resources (ttf/css)')
 
     parser.add_argument('--fields', default=fields, type=str, nargs='*',
@@ -256,7 +257,7 @@ def main():
             #'url': base_url+'/src/glyphs/Symbols-2048-em%20Nerd%20Font%20Complete.ttf',
             #'filepath': os.path.join(args.download, 'Symbols-2048-em_Nerd_Font_Complete.ttf')
             'filepath': os.path.join(args.download,
-                '3270NerdFont-Regular.ttf')
+                #'3270NerdFont-Regular.ttf')
                 #'3270NerdFont-Condensed.ttf')
                 #'3270NerdFont-SemiCondensed.ttf')
                 #'3270NerdFontMono-Condensed.ttf')
@@ -265,13 +266,32 @@ def main():
                 #'3270NerdFontPropo-Condensed.ttf')
                 #'3270NerdFontPropo-Regular.ttf')
                 #'3270NerdFontPropo-SemiCondensed.ttf')
-            },
-        'cssfile': {
+                
+                #'extraglyphs.ttf')
+                #'codicon.ttf')
+                #'codicon_orig.ttf')
+                #'devicons.ttf')
+                #'font-awesome-extension.ttf')
+                #'font-logos.ttf')
+                #'FontAwesome.otf')
+                #'materialdesignicons-webfont.ttf')
+                #'MaterialDesignIconsDesktop.ttf')
+                #'MaterialDesignIconsDesktop_orig.ttf')
+                #'octicons.ttf')
+                #'original-source.otf')
+                #'Pomicons.otf')
+                #'PowerlineExtraSymbols.otf')
+                #'PowerlineSymbols.otf')
+                #'Unicode_IEC_symbol_font.otf')
+                'weathericons-regular-webfont.ttf')
+                #'')
+            }
+#            },
+#        'cssfile': {
             #'url': base_url+'/css/nerd-fonts-generated.css',
             #'filepath': os.path.join(args.download, 'nerd-fonts-generated.css')
-            'filepath': os.path.join(args.download,
-                'css/nerd-fonts-generated.css')
-            }
+#            'filepath': os.path.join(args.download, 'css/nerd-fonts-generated.css')
+#            }
         }
     #raw_data = create_raw_data(resources, False, '/tmp/nerdfonts_svg/')
     #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts-3.3.0/nerdfonts_svg/')
@@ -284,7 +304,26 @@ def main():
     #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts-3.3.0/3270NerdFontMono-SemiCondensed_svg/')
     #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts-3.3.0/3270NerdFontPropo-Condensed_svg/')
     #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts-3.3.0/3270NerdFontPropo-Regular_svg/')
-    raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts-3.3.0/3270NerdFontPropo-SemiCondensed_svg/')
+    #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts-3.3.0/3270NerdFontPropo-SemiCondensed_svg/')
+    
+    #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts_svg_all/glyphs/extraglyphs_svg/')
+    #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts_svg_all/glyphs/codicon_svg/')
+    #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts_svg_all/glyphs/codicon_orig_svg/')
+    #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts_svg_all/glyphs/devicons_svg/')
+    #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts_svg_all/glyphs/font-awesome-extension_svg/')
+    #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts_svg_all/glyphs/font-logos_svg/')
+    #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts_svg_all/glyphs/FontAwesome_svg/')
+    #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts_svg_all/glyphs/materialdesignicons-webfont_svg/')
+    #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts_svg_all/glyphs/MaterialDesignIconsDesktop_svg/')
+    #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts_svg_all/glyphs/MaterialDesignIconsDesktop_orig_svg/')
+    #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts_svg_all/glyphs/octicons_svg/')
+    #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts_svg_all/glyphs/original-source_svg/')
+    #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts_svg_all/glyphs/Pomicons_svg/')
+    #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts_svg_all/glyphs/PowerlineExtraSymbols_svg/')
+    #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts_svg_all/glyphs/PowerlineSymbols_svg/')
+    #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts_svg_all/glyphs/Unicode_IEC_symbol_font_svg/')
+    raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts_svg_all/glyphs/weathericons-regular-webfont_svg/')
+    #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts_svg_all/glyphs//')
     
     print('done!')
 
