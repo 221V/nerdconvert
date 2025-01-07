@@ -58,15 +58,15 @@ def get_glyphs(font):
 
 
 def generate_svgs(glyphs, svgdirectory):
-    result = {}
+    result = True
     index = 1
 
     for glyph in glyphs:
         index_str = str(index)
-        svgfile = svgdirectory + index_str + '.svg'
+        svgfile = svgdirectory + index_str + '_' + glyph.glyphname + '.svg'
         print('svgfile: ', svgfile)
         glyph.export(svgfile)
-        result[index_str] = { 'svgfile': svgfile }
+        #result[index_str] = { 'svgfile': svgfile }
         index += 1
     return result
 
@@ -102,7 +102,6 @@ def extract_from_svg(svgfilepath):
     svg = xml.dom.minidom.parse(svgfilepath)
     viewbox = svg.getElementsByTagName('svg')[0].getAttribute('viewBox')
     paths = [p.getAttribute('d') for p in svg.getElementsByTagName('path')]
-
     return { 'viewbox': viewbox, 'paths': paths }
 
 
@@ -275,7 +274,18 @@ def main():
             }
         }
     #raw_data = create_raw_data(resources, False, '/tmp/nerdfonts_svg/')
-    raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts-3.3.0/nerdfonts_svg/')
+    #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts-3.3.0/nerdfonts_svg/')
+    
+    #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts-3.3.0/3270NerdFont-Regular_svg/')
+    #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts-3.3.0/3270NerdFont-Condensed_svg/')
+    #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts-3.3.0/3270NerdFont-SemiCondensed_svg/')
+    #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts-3.3.0/3270NerdFontMono-Condensed_svg/')
+    #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts-3.3.0/3270NerdFontMono-Regular_svg/')
+    #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts-3.3.0/3270NerdFontMono-SemiCondensed_svg/')
+    #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts-3.3.0/3270NerdFontPropo-Condensed_svg/')
+    #raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts-3.3.0/3270NerdFontPropo-Regular_svg/')
+    raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts-3.3.0/3270NerdFontPropo-SemiCondensed_svg/')
+    
     print('done!')
 
 
