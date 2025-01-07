@@ -1,22 +1,22 @@
 import os
 import re
 import urllib.request
-import json
+#import json
 import fontforge
 import argparse
 import xml.dom.minidom 
 from functools import reduce
 
 
-def download_resources(resources, force=False):
-    for (name, resource) in resources.items():
-        if os.path.isfile(resource['filepath']) and not force:
-            print('Skip download', name, ':', resource['filepath'])
-        else:
-            os.makedirs(os.path.dirname(resource['filepath']), exist_ok=True)
-            print('Downloading', name, ':', resource['url'])
-            urllib.request.urlretrieve(resource['url'], resource['filepath'])
-            print('Saved', name, ':', resource['filepath'])
+#def download_resources(resources, force=False):
+#    for (name, resource) in resources.items():
+#        if os.path.isfile(resource['filepath']) and not force:
+#            print('Skip download', name, ':', resource['filepath'])
+#        else:
+#            os.makedirs(os.path.dirname(resource['filepath']), exist_ok=True)
+#            print('Downloading', name, ':', resource['url'])
+#            urllib.request.urlretrieve(resource['url'], resource['filepath'])
+#            print('Saved', name, ':', resource['filepath'])
 
 
 def save_file(filepath, content):
@@ -27,9 +27,9 @@ def save_file(filepath, content):
         f.write(content)
 
 
-def save_json(filepath, data):
-    with open(filepath, 'w', encoding='utf-8') as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
+#def save_json(filepath, data):
+#    with open(filepath, 'w', encoding='utf-8') as f:
+#        json.dump(data, f, ensure_ascii=False, indent=4)
 
 
 def camel(match):
@@ -44,13 +44,13 @@ def combine_dict(a, b):
     return {**a, **b}
 
 
-def dict_to_js(data):
-    json_data = json.dumps(data, ensure_ascii=False)
-    return re.sub(r'"([a-zA-Z_]*)":', r'\1:', json_data)
+#def dict_to_js(data):
+#    json_data = json.dumps(data, ensure_ascii=False)
+#    return re.sub(r'"([a-zA-Z_]*)":', r'\1:', json_data)
 
 
-def dict_to_json(data):
-    return json.dumps(data, ensure_ascii=False, indent=4)
+#def dict_to_json(data):
+#    return json.dumps(data, ensure_ascii=False, indent=4)
 
 
 def combine_tables(*tables):
@@ -64,11 +64,24 @@ def combine_tables(*tables):
 
 
 def create_glyps(codes):
-    return {code:{ 'glyph': chr(int('0x'+code, 16)) } for code in codes}
+    #return {code:{ 'glyph': chr(int('0x'+code, 16)) } for code in codes}
+    result = {}
+    #for code in codes:
+    for index, code in codes:
+        #print('code: ', code)
+        #try:
+            #glyph_code = chr(int('0x' + code, 16))
+            #print('code: ', code, ' glyph_code: ', glyph_code)
+            #result[code] = {'glyph': glyph_code}
+            result[index] = {'glyph': index}
+        #except ValueError:
+            #result[code] = {'glyph': code}
+            #print(f"invalid hex: {code}, save as string")
+    return result
 
 
-def create_char_dict(code, name):
-    return {'code': code, 'name': name}
+#def create_char_dict(code, name):
+#    return {'code': code, 'name': name}
 
 
 def generate_svgfont(font, svgfilepath):
@@ -86,12 +99,20 @@ def get_glyphs(font):
 
 def generate_svgs(glyphs, svgdirectory):
     result = {}
+    index = 1
 
+    #for glyph in glyphs:
     for glyph in glyphs:
-        code = get_code(glyph)
-        svgfile = svgdirectory + code + '.svg'
+        #code = get_code(glyph)
+        #svgfile = svgdirectory + code + '.svg'
+        index_str = str(index)
+        svgfile = svgdirectory + index_str + '.svg'
+        #print('svgdirectory: ', svgdirectory, ' code: ', code, 'svgfile: ', svgfile)
+        print('svgfile: ', svgfile)
         glyph.export(svgfile)
-        result[code] = { 'svgfile': svgfile }
+        #result[code] = { 'svgfile': svgfile }
+        result[index_str] = { 'svgfile': svgfile }
+        index += 1
 
     return result
 
@@ -99,7 +120,7 @@ def generate_svgs(glyphs, svgdirectory):
 def extract_from_glyph(glyph):
     return {
         'code': get_code(glyph),
-        'glyphname': glyph.glyphname,
+        'glyphname': glyph.glyphname
       #  'boundingbox': glyph.boundingBox()
     }
 
@@ -120,7 +141,7 @@ def extract_from_css(cssfilepath):
     fields = ['code', 'name', 'group', 'iconname']
     field_values = zip(codes, names, groups, iconnames)
 
-    data = [dict(zip(fields, values)) for values in field_values]  
+    data = [dict(zip(fields, values)) for values in field_values]
     return {record['code']:record for record in data}
 
 
@@ -183,10 +204,10 @@ class FilenameFormatter:
 
 class RecordFormatter:
     def __init__(self, field_descriptions):
-        self.field_formatters = [FieldFormatter(fd, True) for fd in field_descriptions] 
+        self.field_formatters = [FieldFormatter(fd, True) for fd in field_descriptions]
 
     def format(self, record):
-        formatted_fields = [f.format(record) for f in self.field_formatters] 
+        formatted_fields = [f.format(record) for f in self.field_formatters]
         return {f[0]:f[1] for f in formatted_fields if f}
 
 
@@ -200,10 +221,12 @@ def filter_records(data, filters):
     return [record for record in data if match_filters(record, filters)]
 
 def create_raw_data(resources, force_download=False, svgdir='svg'):
-    download_resources(resources, force_download)
+    #download_resources(resources, force_download)
+    
+    print('fontfile path: ', resources['fontfile']['filepath'])
+    print('cssfile path: ', resources['cssfile']['filepath'])
     
     font = fontforge.open(resources['fontfile']['filepath'])
-
     table = extract_from_css(resources['cssfile']['filepath'])
     print('Extracted iconinfo from cssfile:',
             resources['cssfile']['filepath'])
@@ -218,16 +241,14 @@ def create_raw_data(resources, force_download=False, svgdir='svg'):
     print('Generated svgicons from fontfile:',
             resources['fontfile']['filepath'], '=>', svgdir+'*.svg')
 
-    svg_file_data = extract_from_svgs(svg_files)
-    print('Extracted inconpaths from svgfiles:', svgdir+'*.svg')
+    #svg_file_data = extract_from_svgs(svg_files)
+    #print('Extracted inconpaths from svgfiles:', svgdir+'*.svg')
 
-
-    data = combine_tables(table, glyph_data, svg_files, svg_file_data)
-    data = combine_tables(data, create_glyps(data.keys()))
-    data = remove_unnamed(data)
-
-    return sorted(list(data.values()), key=lambda r: r['name'])
-
+    #data = combine_tables(table, glyph_data, svg_files, svg_file_data)
+    #data = combine_tables(data, create_glyps(data.keys()))
+    #data = remove_unnamed(data)
+    #return sorted(list(data.values()), key=lambda r: r['name'])
+    return True
 
 def split_path(path, extension=None, default_filename=None):
     if extension and default_filename and not path.endswith(extension):
@@ -240,28 +261,24 @@ def split_path(path, extension=None, default_filename=None):
     return (dirname, filename)
         
 
-def export_csv(filepath, data, record_formatter):
-    import csv
-    base_dir, file_name = split_path(filepath, '.csv', 'nerdfonts')
-    fieldnames = [ff.new_name for ff in record_formatter.field_formatters]
-    export_data = [record_formatter(record) for record in data]
-
-    with open(os.path.join(base_dir, file_name), 'w', newline='') as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-
-        writer.writeheader()
-        writer.writerows(export_data)
-
-    return data
+#def export_csv(filepath, data, record_formatter):
+#    import csv
+#    base_dir, file_name = split_path(filepath, '.csv', 'nerdfonts')
+#    fieldnames = [ff.new_name for ff in record_formatter.field_formatters]
+#    export_data = [record_formatter(record) for record in data]
+#    with open(os.path.join(base_dir, file_name), 'w', newline='') as csvfile:
+#        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+#        writer.writeheader()
+#        writer.writerows(export_data)
+#    return data
 
 
-def export_json(filepath, data, record_formatter):
-    base_dir, file_name = split_path(filepath, '.json', 'nerdfonts')
-    export_data = [record_formatter.format(record) for record in data]
-    print(os.path.join(base_dir, file_name))
-    save_file(os.path.join(base_dir, file_name), dict_to_json(export_data))
-
-    return data
+#def export_json(filepath, data, record_formatter):
+#    base_dir, file_name = split_path(filepath, '.json', 'nerdfonts')
+#    export_data = [record_formatter.format(record) for record in data]
+#    print(os.path.join(base_dir, file_name))
+#    save_file(os.path.join(base_dir, file_name), dict_to_json(export_data))
+#    return data
 
 
 def export_svg(filepath, data, record_formatter):
@@ -278,59 +295,53 @@ def export_svg(filepath, data, record_formatter):
 
     return data
 
-def export_es_single(filepath, record, record_formatter):
-    filtered_record = record_formatter.format(record)
-    content = 'export default ' + dict_to_js(filtered_record) 
-    save_file(filepath, content)
-    return (filepath, record)
+#def export_es_single(filepath, record, record_formatter):
+#    filtered_record = record_formatter.format(record)
+#    content = 'export default ' + dict_to_js(filtered_record)
+#    save_file(filepath, content)
+#    return (filepath, record)
 
 
-def export_es_index_single(base_dir, module_filepath, name, record):
-    import_path = os.path.relpath(module_filepath, start=base_dir)
-    import_path = os.path.join('.', import_path)
-    index_path = os.path.join(base_dir, 'index.js')
+#def export_es_index_single(base_dir, module_filepath, name, record):
+#    import_path = os.path.relpath(module_filepath, start=base_dir)
+#    import_path = os.path.join('.', import_path)
+#    index_path = os.path.join(base_dir, 'index.js')
+#    content = '/* '+record['glyph']+' */ export { default as '+name+' } '
+#    content += 'from \''+ import_path.replace('.js', '') +'\';\n'
+#    with open(index_path, 'a', encoding='utf-8') as f:
+#        f.write(content)
 
-    content = '/* '+record['glyph']+' */ export { default as '+name+' } '
-    content += 'from \''+ import_path.replace('.js', '') +'\';\n'
+#def export_es(filepath, data, record_formatter):
+#    base_dir, file_name = split_path(filepath, '.js', '{name}')
+#    filename_formatter = FilenameFormatter(
+#            os.path.join(base_dir, '{group}/{iconname}.js'))
+#    files = []
+#    for record in data:
+#        file_path = filename_formatter.format(record)
+#        files.append(export_es_single(file_path, record, record_formatter))
+#    for (file_path, record) in files:
+#        main_module_name = to_camel_case(record['name'])
+#        export_es_index_single(base_dir, file_path, main_module_name, record)
+#        group_module_name = to_camel_case(record['iconname'])
+#        if re.match(r'^[^a-z]', group_module_name):
+#            group_module_name = main_module_name
+#        group_base_dir = os.path.dirname(file_path)
+#        export_es_index_single(group_base_dir, file_path, group_module_name, record)
+#    return data
 
-    with open(index_path, 'a', encoding='utf-8') as f:
-        f.write(content)
-    
-def export_es(filepath, data, record_formatter):
-    base_dir, file_name = split_path(filepath, '.js', '{name}')
 
-    filename_formatter = FilenameFormatter(
-            os.path.join(base_dir, '{group}/{iconname}.js'))
-
-    files = []
-
-    for record in data:
-        file_path = filename_formatter.format(record)
-        files.append(export_es_single(file_path, record, record_formatter))
-
-    for (file_path, record) in files:
-        main_module_name = to_camel_case(record['name'])
-        export_es_index_single(base_dir, file_path, main_module_name, record)
-        
-        group_module_name = to_camel_case(record['iconname'])
-        if re.match(r'^[^a-z]', group_module_name):
-            group_module_name = main_module_name
-        group_base_dir = os.path.dirname(file_path)
-        export_es_index_single(group_base_dir, file_path, group_module_name, record)
-        
-    return data
-
-        
 def parse_args():
 
     fields = ['code', 'name', 'glyphname', 'iconname', 'group',
                 'glyph', 'svgfile', 'viewbox', 'paths']
 
     parser = argparse.ArgumentParser(
-        description='Convert nerd-font-icons to SVG / JSON / CSV / ESModule',
+        #description='Convert nerd-font-icons to SVG / JSON / CSV / ESModule',
+        description='Convert nerd-font-icons to SVG / CSV / ESModule',
         formatter_class=argparse.RawTextHelpFormatter)
 
-    parser.add_argument('--download', default='/tmp/nerdfonts_dl/', type=str,
+    #parser.add_argument('--download', default='/tmp/nerdfonts_dl/', type=str,
+    parser.add_argument('--download', default='/home/e/Завантаження/Firefox_Downloads/nerd-fonts-3.3.0/', type=str,
         help='Download Directory for nerd-fonts resources (ttf/css)')
 
     
@@ -356,50 +367,61 @@ def parse_args():
 
 
 def main():
-
     args = parse_args()
-
-    base_url = 'https://raw.githubusercontent.com/ryanoasis/nerd-fonts/master'
-
+    #base_url = 'https://raw.githubusercontent.com/ryanoasis/nerd-fonts/master'
     resources = {
         'fontfile': {
-            'url': base_url+'/src/glyphs/Symbols-2048-em%20Nerd%20Font%20Complete.ttf',
+            #'url': base_url+'/src/glyphs/Symbols-2048-em%20Nerd%20Font%20Complete.ttf',
+            #'filepath': os.path.join(args.download, 'Symbols-2048-em_Nerd_Font_Complete.ttf')
             'filepath': os.path.join(args.download,
-                'Symbols-2048-em_Nerd_Font_Complete.ttf')
+                '3270NerdFont-Regular.ttf')
+                #'3270NerdFont-Condensed.ttf')
+                #'3270NerdFont-SemiCondensed.ttf')
+                #'3270NerdFontMono-Condensed.ttf')
+                #'3270NerdFontMono-Regular.ttf')
+                #'3270NerdFontMono-SemiCondensed.ttf')
+                #'3270NerdFontPropo-Condensed.ttf')
+                #'3270NerdFontPropo-Regular.ttf')
+                #'3270NerdFontPropo-SemiCondensed.ttf')
             },
         'cssfile': {
-            'url': base_url+'/css/nerd-fonts-generated.css',
-            'filepath': os.path.join(args.download, 'nerd-fonts-generated.css')
+            #'url': base_url+'/css/nerd-fonts-generated.css',
+            #'filepath': os.path.join(args.download, 'nerd-fonts-generated.css')
+            'filepath': os.path.join(args.download,
+                'css/nerd-fonts-generated.css')
             }
         }
+    #raw_data = create_raw_data(resources, False, '/tmp/nerdfonts_svg/')
+    raw_data = create_raw_data(resources, False, '/home/e/Завантаження/Firefox_Downloads/nerd-fonts-3.3.0/nerdfonts_svg/')
+    #data = filter_records(raw_data, args.filter) if args.filter else raw_data
+    #record_formatter = RecordFormatter(args.fields)
+    #exporters = {
+            #'json': export_json,
+            #'csv': export_csv,
+    #        'svg': export_svg
+            #'es': export_es
+    #        }
 
-
-    raw_data = create_raw_data(resources, False, '/tmp/nerdfonts_svg/')
-
-    data = filter_records(raw_data, args.filter) if args.filter else raw_data
-    
-    record_formatter = RecordFormatter(args.fields)
-    
-    exporters = {
-            'json': export_json,
-            'csv': export_csv,
-            'svg': export_svg,
-            'es': export_es
-            }
-
-    for output in args.output:
-        exporter = exporters.get(output[0], None)
-        if exporter:
-            print('running exporter', output[0])
-            exporter(output[1], data, record_formatter)
-        else:
-            print(f'exporter for format"{output[0]}"does not exist')
-
+    #for output in args.output:
+    #    exporter = exporters.get(output[0], None)
+    #    if exporter:
+    #        print('running exporter', output[0])
+    #        exporter(output[1], data, record_formatter)
+    #    else:
+    #        print(f'exporter for format"{output[0]}"does not exist')
     
     #save_json(args.json, data)
-
     print('done!')
 
 
 if __name__ == '__main__':
     main()
+
+# sudo apt-get install python3-fontforge
+# python3 nerdconvert.py -o svg svgfiles/{name:camelcase}_{code}.svg
+
+# or
+# https://github.com/fontforge/fontforge/issues/2597
+# fontforge -lang=py -script nerdconvert.py -o svg svgfiles/{name:camelcase}_{code}.svg
+
+
